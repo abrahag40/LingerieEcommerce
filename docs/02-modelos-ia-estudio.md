@@ -339,12 +339,14 @@ ecommerce comercial.**
 
 | Modelo | Licencia | Nota |
 |---|---|---|
-| **FLUX.2 [klein] 4B** (enero 2026) | ✅ **Apache 2.0** | Sin límite de ingresos ni registro. **~8 GB de VRAM**, generación sub-segundo, soporta edición con imagen de referencia. La mejor opción para self-hosting |
-| **FLUX.1 [schnell]** | ✅ Apache 2.0 | — |
-| **Qwen-Image-Edit-2511** (Alibaba) | ✅ Apache 2.0 *(código; pesos sin verificar)* | Probablemente el mejor editor instruccional open source |
-| **SDXL 1.0** | ✅ Open RAIL++-M | Ecosistema maduro (IP-Adapter, ControlNet, ComfyUI) |
-| **HunyuanImage 3.0** (Tencent) | ⚠️ Su licencia **NO APLICA en la UE, Reino Unido ni Corea del Sur** | Descartar si se vende a Europa |
-| FLUX.2 [klein] 9B, FLUX [dev] | ❌ No comercial | Ver trampa abajo |
+| **Qwen-Image-Edit-2511** (Alibaba) | ✅ Apache 2.0 *(LICENSE verificado; confirmar el model card de cada checkpoint)* | **El mejor equilibrio calidad/licencia.** Consistencia de personaje, reemplazo de materiales y control de punto de vista: justo la tripleta que necesita un catálogo (misma modelo, misma pose, otra prenda, varios ángulos). fp8 ~20–24 GB |
+| **SDXL 1.0** | ✅ Open RAIL++-M | Sin umbral de ingresos ni registro. ~10 GB. El stack más maduro (IP-Adapter, ControlNet, ComfyUI). Menor fidelidad de textura fina |
+| **FLUX.2 [klein] 4B / klein-base 4B** (enero 2026) | ✅ **Apache 2.0** | **~8 GB de VRAM**, sub-segundo. La variante `klein-base` es la no destilada, pensada para fine-tuning |
+| **FLUX.1 [schnell]** | ✅ Apache 2.0 | Destilado: peor adherencia a prompts largos, no acepta CFG real |
+| **Wan 2.1 / 2.2** (Alibaba, vídeo) | ✅ Apache 2.0 | Para clips de la prenda en movimiento. `TI2V-5B` corre en una RTX 4090 |
+| **SD 3.5** | ⚠️ Stability Community | Gratis **solo bajo $1 M USD/año**, y el umbral es sobre **ingresos totales del negocio**, no los atribuibles a la IA. La terminación es automática. Exige registro y mostrar *"Powered by Stability AI"* |
+| **HunyuanImage** (Tencent) | ❌ Su licencia **excluye la UE, Reino Unido y Corea del Sur** | No solo prohíbe ejecutarlo: prohíbe **mostrar los outputs** en esos territorios, aunque se generen en otra región. Descartar si se vende a Europa |
+| FLUX.2 [klein] 9B, FLUX [dev], Kontext [dev], Fill [dev] | ❌ No comercial | Ver trampa abajo |
 
 > **⚠️ La trampa de FLUX [dev]**, que se malinterpreta constantemente: su §2(d) dice que *"puedes usar
 > el Output para cualquier propósito, incluido el comercial"* — pero el §2(b) restringe **ejecutar el
@@ -354,6 +356,36 @@ ecommerce comercial.**
 >
 > Su §2(e) además **obliga contractualmente** a implementar filtros de contenido y a **revelar que el
 > contenido fue generado con IA** cuando la ley lo exija.
+>
+> Si se negocia la licencia comercial de BFL, hay que **pedir por escrito** tres condiciones antes de
+> firmar: precio, **límite de imágenes al mes** (el tier de autoservicio ronda las 10.000, que un
+> probador interactivo consume muy rápido) y la **restricción a un solo dominio**, problemática si hay
+> tienda + marketplace + app.
+
+### Dos trampas de licencia que es fácil pasar por alto
+
+- **IP-Adapter FaceID**, que se usa para dar consistencia de identidad a una modelo virtual, depende
+  de **InsightFace**, cuyos modelos son **de solo investigación**. Introduce una dependencia no
+  comercial por la puerta de atrás en un stack que por lo demás es limpio.
+- **NVIDIA Sana** tiene el **código Apache 2.0 pero los pesos históricamente bajo licencia no
+  comercial**. Es el patrón clásico "código permisivo, pesos restringidos": hay que verificar siempre
+  el model card del checkpoint concreto, no solo el repositorio.
+
+### Buena noticia sobre la categoría
+
+**Ninguna de las licencias verificadas prohíbe generar imágenes de lencería.** Las únicas
+prohibiciones sexuales presentes son material de abuso infantil e imágenes íntimas no consentidas
+—universales y ajenas a este caso—. En particular, las 11 categorías restringidas del **Open RAIL++-M
+de SDXL no incluyen contenido sexual ni desnudez**.
+
+**El obstáculo real no es contractual sino de capacidad del modelo:** los filtros aplicados durante el
+entrenamiento degradan la anatomía bajo encaje y transparencias (tirantes que desaparecen, tela que se
+funde con la piel). Eso no se arregla con licencias: se arregla con **un LoRA entrenado sobre nuestro
+propio catálogo fotografiado**, que es exactamente lo que permiten las opciones Apache 2.0.
+
+⚠️ La excepción a vigilar es la **política de uso aceptable de Stability**, que es contractualmente
+vinculante para SD 3.5, **puede actualizarse unilateralmente** y no se pudo leer en esta
+investigación. Debe revisarse antes de elegir ese modelo.
 
 ### Arquitectura recomendada si se llega a self-hosting
 
