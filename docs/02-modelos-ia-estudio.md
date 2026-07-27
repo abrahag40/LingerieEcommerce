@@ -314,26 +314,48 @@ reales en los repositorios de GitHub.)*
 
 ### Hallazgo central: el problema no es la licencia del código, es el dataset
 
-**Prácticamente todos los modelos de virtual try-on open source son de uso NO comercial.** Y el
-motivo de fondo es más profundo que su licencia: **todos están entrenados sobre los datasets VITON-HD
-(CC BY-NC 4.0, *"research purposes only"*) y DressCode** (requiere acuerdo firmado y ni siquiera
-acepta correos no institucionales).
+**Prácticamente ningún modelo de virtual try-on open source es usable comercialmente tal cual.** Y el
+motivo de fondo no es su licencia, sino sus **datos de entrenamiento**: casi todos están entrenados
+sobre **VITON-HD** (CC BY-NC 4.0, *"research purposes only"*) y **DressCode**.
 
-Es decir: **aunque el código de un modelo sea MIT, sus pesos derivan de datos de solo investigación.**
-Ningún abogado firmaría su uso comercial apoyándose solo en la licencia del código.
+> **🔴 El dato que hay que retener sobre DressCode.** Su licencia es propiedad de **Yoox
+> Net-a-Porter** —un grupo de moda con departamento legal activo y **competidor directo del sector**—
+> y dice literalmente que *"cualquier otra obra que hagas usando el Dress Code Dataset estará sujeta a
+> los mismos términos y restricciones: en particular, eso significa que **no puedes usarlas con fines
+> comerciales**"*. Se rige por **ley italiana**. El acceso exige formulario, correo institucional
+> (gmail se rechaza explícitamente) y acuerdo firmado.
+>
+> Es decir: **un checkpoint entrenado con DressCode hereda la prohibición comercial sin importar qué
+> licencia le ponga el autor del repositorio.**
 
 | Modelo | Licencia verificada | ¿Comercial? |
 |---|---|---|
-| IDM-VTON, OOTDiffusion, CatVTON, CatV2TON, HR-VITON, FitDiT | **CC BY-NC / CC BY-NC-SA 4.0** | ❌ **No** |
-| StableVITON | **Sin archivo LICENSE** → todos los derechos reservados | ❌ **No** (peor situación que las anteriores) |
-| Leffa (Meta) | Código MIT, **pesos sin licencia declarada** | ⚠️ Zona gris — evitar |
-| FitDiT (Tencent) | CC BY-NC-SA, pero **con ruta comercial vía Tencent Cloud** | Solo por esa vía |
+| IDM-VTON, OOTDiffusion, CatVTON, CatV2TON, HR-VITON, MV-VTON, Magic-TryOn | **CC BY-NC / CC BY-NC-SA 4.0** | ❌ **No** |
+| StableVITON, RefTon, Any2AnyTryon, SPM-Diff, DreamVVT | **Sin archivo LICENSE** → todos los derechos reservados | ❌ **No** (peor situación aún) |
+| Leffa | Código MIT (de un investigador individual, **no de Meta**), **pesos sin licencia declarada** y entrenados sobre VITON-HD/DressCode | ⚠️ Evitar |
+| **OutfitAnyone** (Alibaba) | **No hay repositorio**: solo un README y dos GIFs. Ni código ni pesos | ❌ Vaporware |
+| **TryOffDiff** | **SSPL v1** (la licencia de MongoDB) | ☢️ Obliga a publicar todo el stack de servicio. **Radiactiva para un ecommerce** |
 
 Ojo con la cláusula **ShareAlike**: si hacemos fine-tuning sobre uno de estos modelos, **el derivado
 hereda la licencia no comercial**. Contamina nuestro trabajo.
 
-**Conclusión: no existe hoy un modelo VTON open source especializado que sea limpiamente usable en un
-ecommerce comercial.**
+### Sí existen rutas comerciales legítimas
+
+Esto matiza lo anterior y es la vía rápida sin riesgo legal:
+
+| Modelo | Ruta comercial |
+|---|---|
+| **FitDiT** (Tencent) | Licencia comercial vía **Tencent Cloud**. La única con soporte de gran empresa |
+| **FastFit** (mismo autor que CatVTON) | Vía **LavieAI** |
+| **Voost** (NXN Labs) | Vía **NXN Labs** ⚠️ aunque su repo tampoco publica código ni pesos |
+
+### Y una ruta limpia para construir lo nuestro
+
+**IMAGDressing** (AAAI 2025) es el caso más honesto del ecosistema: su README declara que **el código
+es Apache 2.0 y explícitamente usable con fines comerciales**, mientras que solo sus *checkpoints* son
+de investigación. Es decir, **podemos usar su código y reentrenar con nuestras propias fotografías**.
+
+Combinado con el punto siguiente, es probablemente la mejor opción a medio plazo.
 
 ### Modelos base que SÍ permiten uso comercial
 
@@ -382,6 +404,20 @@ de SDXL no incluyen contenido sexual ni desnudez**.
 entrenamiento degradan la anatomía bajo encaje y transparencias (tirantes que desaparecen, tela que se
 funde con la piel). Eso no se arregla con licencias: se arregla con **un LoRA entrenado sobre nuestro
 propio catálogo fotografiado**, que es exactamente lo que permiten las opciones Apache 2.0.
+
+### Dos problemas operativos que ninguna licencia menciona
+
+1. **Ninguno de estos modelos ha visto lencería en su entrenamiento.** VITON-HD son camisetas y tops;
+   DressCode son prendas de torso, piernas y vestidos. Peor aún: los pipelines dependen de **máscaras
+   agnósticas** generadas con SCHP y DensePose, calibradas para borrar la región de *ropa exterior*.
+   Con tirantes finos, encaje y cobertura mínima, esas máscaras **borran demasiada piel o dejan la
+   prenda original visible**. Hay que contar con reentrenar también el generador de máscaras, no solo
+   el modelo. Es trabajo real que debe entrar en la estimación.
+2. **Los *safety checkers* de Stable Diffusion producen muchos falsos positivos con lencería,
+   bikinis y piel expuesta**, devolviendo imágenes en negro. En estos repositorios suelen venir
+   desactivados; hay que auditarlo caso por caso y decidir conscientemente qué moderación ponemos
+   nosotros — teniendo en cuenta que la licencia de FLUX v2.0 **obliga contractualmente** a tener
+   alguna.
 
 ⚠️ La excepción a vigilar es la **política de uso aceptable de Stability**, que es contractualmente
 vinculante para SD 3.5, **puede actualizarse unilateralmente** y no se pudo leer en esta
