@@ -155,6 +155,15 @@ En una categoría con 30–35 % de devoluciones donde el 80 % de las clientas no
 inversión de mayor rendimiento no es generar modelos: es la guía de tallas y el ajuste.** Esto además
 conecta directamente con la pregunta 12 del cuestionario de levantamiento.
 
+> ⚠️ **Salvedad de privacidad.** Hay dos variantes de probador virtual y no tienen el mismo riesgo:
+> el que muestra la prenda sobre **modelos predefinidas** es de bajo riesgo; el que usa una **foto o
+> selfie de la propia clienta** implica tratar **datos biométricos** (LFPDPPP en México, GDPR si vende
+> a la UE), con obligaciones reforzadas de consentimiento, minimización y retención. En lencería, con
+> fotos de cuerpo de usuarias reales, el riesgo legal y reputacional sube mucho. **Recomendación:
+> empezar por la variante con modelos predefinidas y calculadora de tallas**, y solo evaluar la de
+> selfie con asesoría legal previa y una política de retención estricta (procesar y descartar, nunca
+> almacenar).
+
 ---
 
 ## 7. Obligaciones legales — urgentes
@@ -294,7 +303,78 @@ contra el texto del DOF.
 > anuales con compromiso de volumen: pay-as-you-go y APIs intercambiables.**
 >
 > Además, en infraestructura (fal.ai, Replicate) **cada modelo tiene su propia licencia**, más
-> restrictiva que la plataforma: las variantes `[dev]` de FLUX son de **uso no comercial**.
+> restrictiva que la plataforma.
+
+---
+
+## 9 bis. Self-hosting: licencias verificadas
+
+*(Esta es la única sección del informe verificada en fuente primaria: se leyeron los archivos LICENSE
+reales en los repositorios de GitHub.)*
+
+### Hallazgo central: el problema no es la licencia del código, es el dataset
+
+**Prácticamente todos los modelos de virtual try-on open source son de uso NO comercial.** Y el
+motivo de fondo es más profundo que su licencia: **todos están entrenados sobre los datasets VITON-HD
+(CC BY-NC 4.0, *"research purposes only"*) y DressCode** (requiere acuerdo firmado y ni siquiera
+acepta correos no institucionales).
+
+Es decir: **aunque el código de un modelo sea MIT, sus pesos derivan de datos de solo investigación.**
+Ningún abogado firmaría su uso comercial apoyándose solo en la licencia del código.
+
+| Modelo | Licencia verificada | ¿Comercial? |
+|---|---|---|
+| IDM-VTON, OOTDiffusion, CatVTON, CatV2TON, HR-VITON, FitDiT | **CC BY-NC / CC BY-NC-SA 4.0** | ❌ **No** |
+| StableVITON | **Sin archivo LICENSE** → todos los derechos reservados | ❌ **No** (peor situación que las anteriores) |
+| Leffa (Meta) | Código MIT, **pesos sin licencia declarada** | ⚠️ Zona gris — evitar |
+| FitDiT (Tencent) | CC BY-NC-SA, pero **con ruta comercial vía Tencent Cloud** | Solo por esa vía |
+
+Ojo con la cláusula **ShareAlike**: si hacemos fine-tuning sobre uno de estos modelos, **el derivado
+hereda la licencia no comercial**. Contamina nuestro trabajo.
+
+**Conclusión: no existe hoy un modelo VTON open source especializado que sea limpiamente usable en un
+ecommerce comercial.**
+
+### Modelos base que SÍ permiten uso comercial
+
+| Modelo | Licencia | Nota |
+|---|---|---|
+| **FLUX.2 [klein] 4B** (enero 2026) | ✅ **Apache 2.0** | Sin límite de ingresos ni registro. **~8 GB de VRAM**, generación sub-segundo, soporta edición con imagen de referencia. La mejor opción para self-hosting |
+| **FLUX.1 [schnell]** | ✅ Apache 2.0 | — |
+| **Qwen-Image-Edit-2511** (Alibaba) | ✅ Apache 2.0 *(código; pesos sin verificar)* | Probablemente el mejor editor instruccional open source |
+| **SDXL 1.0** | ✅ Open RAIL++-M | Ecosistema maduro (IP-Adapter, ControlNet, ComfyUI) |
+| **HunyuanImage 3.0** (Tencent) | ⚠️ Su licencia **NO APLICA en la UE, Reino Unido ni Corea del Sur** | Descartar si se vende a Europa |
+| FLUX.2 [klein] 9B, FLUX [dev] | ❌ No comercial | Ver trampa abajo |
+
+> **⚠️ La trampa de FLUX [dev]**, que se malinterpreta constantemente: su §2(d) dice que *"puedes usar
+> el Output para cualquier propósito, incluido el comercial"* — pero el §2(b) restringe **ejecutar el
+> modelo** a fines no comerciales, y el §1(c) define como comercial cualquier *"actividad generadora
+> de ingresos"*. **Los resultados son comercializables, pero no estamos autorizados a ejecutar el
+> modelo para producirlos.** Generar nuestro catálogo cae dentro de lo prohibido.
+>
+> Su §2(e) además **obliga contractualmente** a implementar filtros de contenido y a **revelar que el
+> contenido fue generado con IA** cuando la ley lo exija.
+
+### Arquitectura recomendada si se llega a self-hosting
+
+Abandonar el paradigma VTON académico (legalmente inviable) y usar **editores instruccionales de
+propósito general con licencia permisiva**: FLUX.2 [klein] 4B o Qwen-Image-Edit, con edición por
+referencia e inpainting sobre la zona de la prenda, y LoRA entrenado **con nuestro propio catálogo
+fotografiado** — lo que además elimina el problema del dataset y da consistencia de marca.
+
+### Cuándo conviene económicamente
+
+**El punto de equilibrio está entre ~5.800 y ~29.200 imágenes al mes**, según el precio de la API con
+la que se compare. Por debajo de eso, una GPU dedicada sale **más cara** que la API, porque se paga
+por hora se use o no: un ecommerce pequeño opera al ~5 % de utilización y ahí el costo efectivo sube
+a ~$0,22 por imagen, por encima de cualquier API.
+
+**Para volumen bajo o disperso, la opción correcta es serverless con scale-to-zero**, no instancia
+dedicada. Y el arranque en frío es un problema de latencia (UX), no de costo.
+
+**Precios de API verificados** en la página oficial de Google Cloud: Gemini 3.1 Flash Image
+(~$0,067/img), Flash-Lite (~$0,034/img), Gemini 3 Pro Image / Nano Banana Pro (~$0,134/img).
+**Batch API: −50 %.** El *Virtual Try-On* de Vertex AI sigue en preview y no publica precio.
 
 ---
 
